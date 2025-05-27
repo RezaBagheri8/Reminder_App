@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Reminder</string>
+    <string name="welcome_back">Welcome Back Goldra</string>
+    <string name="good_afternoon">Good Afternoon</string>
+    <string name="task_list">Task list</string>
+    <string name="learn_prototyping">Learn Prototyping by 11am</string>
+    <string name="take_water_break">Take water break by 2:30pm</string>
+    <string name="prepare_lunch">Prepare lunch by 3pm</string>
+    <string name="call_patricia">Call Patricia by 5pm</string>
+</resources>

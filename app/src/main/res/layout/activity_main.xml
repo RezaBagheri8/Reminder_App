@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/main_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background_color">
+
+    <!-- Main Content Container -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginBottom="80dp"
+        android:orientation="vertical"
+        android:background="@color/background_color">
+
+        <!-- Top Purple Section -->
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:background="@drawable/purple_gradient_background"
+            android:padding="24dp">
+
+            <!-- Profile Image -->
+            <ImageView
+                android:id="@+id/iv_profile"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="60dp"
+                android:src="@drawable/profile_placeholder"
+                android:scaleType="centerCrop"
+                android:background="@drawable/circle_background" />
+
+            <!-- Welcome Text -->
+            <TextView
+                android:id="@+id/tv_welcome"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/iv_profile"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="16dp"
+                android:text="Welcome Back Goldra"
+                android:textColor="@android:color/white"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+        </RelativeLayout>
+
+        <!-- Bottom White Section -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1.8"
+            android:orientation="vertical"
+            android:background="@android:color/white"
+            android:padding="24dp">
+
+            <!-- Good Afternoon Text -->
+            <TextView
+                android:id="@+id/tv_greeting"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Good Afternoon"
+                android:textColor="@android:color/black"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="16dp" />
+
+            <!-- Clock -->
+            <FrameLayout
+                android:layout_width="70dp"
+                android:layout_height="70dp"
+                android:layout_gravity="center"
+                android:layout_marginBottom="24dp">
+
+                <ImageView
+                    android:id="@+id/iv_clock"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:src="@drawable/clock_background"
+                    android:scaleType="centerCrop" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="3"
+                    android:textSize="14sp"
+                    android:textColor="@color/purple_text"
+                    android:layout_marginEnd="30dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="6"
+                    android:textSize="14sp"
+                    android:textColor="@color/purple_text"
+                    android:layout_marginTop="30dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="9"
+                    android:textSize="14sp"
+                    android:textColor="@color/purple_text"
+                    android:layout_marginStart="30dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="12"
+                    android:textSize="14sp"
+                    android:textColor="@color/purple_text"
+                    android:layout_marginBottom="30dp" />
+            </FrameLayout>
+
+            <!-- Task List Section -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="12dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Task list"
+                    android:textColor="@android:color/black"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- Task List Container with Input and RecyclerView -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/task_list_background"
+                android:padding="16dp">
+
+                <!-- Add Task Input Section -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="12dp"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Task list"
+                        android:textColor="@android:color/black"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:layout_marginEnd="12dp" />
+
+                    <EditText
+                        android:id="@+id/et_new_task"
+                        android:layout_width="0dp"
+                        android:layout_height="36dp"
+                        android:layout_weight="1"
+                        android:hint="Enter new task..."
+                        android:textSize="12sp"
+                        android:paddingStart="8dp"
+                        android:paddingEnd="8dp"
+                        android:background="#FFF"
+                        android:textColor="#000"
+                        android:textColorHint="#000"/>
+
+                    <ImageView
+                        android:id="@+id/iv_add_task"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_marginStart="8dp"
+                        android:src="@drawable/ic_add"
+                        android:background="@drawable/circle_add_background"
+                        android:padding="4dp"
+                        android:clickable="true"
+                        android:focusable="true" />
+                </LinearLayout>
+
+                <!-- Task RecyclerView -->
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rv_tasks"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Bottom navigation will be added programmatically here by BaseActivity -->
+
+</RelativeLayout>

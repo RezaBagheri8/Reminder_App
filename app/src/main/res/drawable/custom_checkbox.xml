@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_checked="true">
+        <layer-list>
+            <item>
+                <shape android:shape="rectangle">
+                    <solid android:color="@color/checkbox_purple" />
+                    <corners android:radius="4dp" />
+                    <size android:width="20dp" android:height="20dp" />
+                </shape>
+            </item>
+            <item android:gravity="center">
+                <vector android:width="12dp" android:height="12dp"
+                    android:viewportWidth="24" android:viewportHeight="24">
+                    <path android:fillColor="@android:color/white"
+                        android:pathData="M9,16.17L4.83,12l-1.42,1.41L9,19 21,7l-1.41,-1.41z"/>
+                </vector>
+            </item>
+        </layer-list>
+    </item>
+    <item android:state_checked="false">
+        <shape android:shape="rectangle">
+            <stroke android:width="2dp" android:color="@color/checkbox_purple" />
+            <solid android:color="@android:color/white" />
+            <corners android:radius="4dp" />
+            <size android:width="20dp" android:height="20dp" />
+        </shape>
+    </item>
+</selector>

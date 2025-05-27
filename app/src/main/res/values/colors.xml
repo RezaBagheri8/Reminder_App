@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <!-- Custom colors for the app -->
+    <color name="background_color">#F5F5F5</color>
+    <color name="purple_gradient_start">#8B5FBF</color>
+    <color name="purple_gradient_end">#B19CD6</color>
+    <color name="purple_text">#8B5FBF</color>
+    <color name="task_background">#E8E8E8</color>
+    <color name="checkbox_purple">#C8A8E9</color>
+        <color name="nav_icon_selected">#8B5FBF</color>
+        <color name="nav_icon_unselected">#999999</color>
+        <color name="nav_text_selected">#8B5FBF</color>
+        <color name="nav_text_unselected">#999999</color>
+
+</resources>
