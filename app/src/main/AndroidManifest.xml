@@ -2,6 +2,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Permissions for notifications -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -14,6 +19,7 @@
         tools:targetApi="31">
         <activity
             android:name=".MainActivity"
+            android:windowSoftInputMode="adjustResize|stateHidden"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -21,14 +27,30 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity 
+        <activity
             android:name=".TaskListActivity"
             android:label="Task Lists"
             android:parentActivityName=".MainActivity" />
-        <activity 
-            android:name=".TaskListDetailsActivity"
-            android:label="Task List Details"
-            android:parentActivityName=".TaskListActivity" />
+<!--        <activity-->
+<!--            android:name=".TaskListDetailsActivity"-->
+<!--            android:label="Task List Details"-->
+<!--            android:parentActivityName=".TaskListActivity" />-->
+
+        <!-- Register the AlarmReceiver to handle alarms -->
+        <receiver
+            android:name=".notification.AlarmReceiver"
+            android:enabled="true"
+            android:exported="false" />
+
+        <!-- Receiver for device boot to reschedule notifications -->
+        <receiver
+            android:name=".notification.BootReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

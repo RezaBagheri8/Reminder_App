@@ -1,14 +1,21 @@
 package com.example.reminder;
 
+import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.reminder.notification.AlarmScheduler;
+
+import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Map;
+import java.util.Locale;
 
 public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder> {
 
@@ -88,12 +95,14 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
         private CheckBox cbTask;
         private TextView tvTaskTitle;
         private TextView tvTaskListName;
+        private TextView tvTaskDueDate;
 
         public TaskViewHolder(@NonNull View itemView) {
             super(itemView);
             cbTask = itemView.findViewById(R.id.cb_task);
             tvTaskTitle = itemView.findViewById(R.id.tv_task_title);
             tvTaskListName = itemView.findViewById(R.id.tv_task_list_name);
+            tvTaskDueDate = itemView.findViewById(R.id.tv_task_due_date);
         }
 
         public void bind(Task task, int position) {
@@ -108,6 +117,16 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
                 tvTaskListName.setVisibility(View.GONE);
             }
 
+            // Display due date if available
+            if (task.getDueDate() != null) {
+                SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy 'at' h:mm a", Locale.getDefault());
+                String formattedDate = dateFormat.format(task.getDueDate());
+                tvTaskDueDate.setText("Due: " + formattedDate);
+                tvTaskDueDate.setVisibility(View.VISIBLE);
+            } else {
+                tvTaskDueDate.setVisibility(View.GONE);
+            }
+
             // Clear the listener first to prevent triggering during setChecked
             cbTask.setOnCheckedChangeListener(null);
             cbTask.setChecked(task.isCompleted());
@@ -116,6 +135,12 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
             cbTask.setOnCheckedChangeListener((buttonView, isChecked) -> {
                 if (listener != null) {
                     listener.onTaskChecked(position, isChecked);
+                }
+
+                // If task is marked as completed, cancel any scheduled notifications
+                if (isChecked && task.getDueDate() != null) {
+                    Context context = itemView.getContext();
+                    AlarmScheduler.cancelTaskReminder(context, task.getId());
                 }
             });
         }

@@ -1,11 +1,14 @@
 package com.example.reminder;
 
+import java.util.Date;
+
 public class Task {
     private long id;
     private String title;
     private boolean isCompleted;
     private String time;
     private long taskListId;
+    private Date dueDate; // For storing the full date and time for the task deadline
 
     public Task(String title, String time) {
         this.title = title;
@@ -17,6 +20,13 @@ public class Task {
         this.title = title;
         this.time = time;
         this.isCompleted = isCompleted;
+    }
+    
+    public Task(String title, String time, boolean isCompleted, Date dueDate) {
+        this.title = title;
+        this.time = time;
+        this.isCompleted = isCompleted;
+        this.dueDate = dueDate;
     }
 
     public long getId() {
@@ -61,5 +71,13 @@ public class Task {
 
     public void setTaskListId(long taskListId) {
         this.taskListId = taskListId;
+    }
+    
+    public Date getDueDate() {
+        return dueDate;
+    }
+    
+    public void setDueDate(Date dueDate) {
+        this.dueDate = dueDate;
     }
 }

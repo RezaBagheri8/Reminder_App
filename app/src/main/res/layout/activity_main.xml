@@ -11,8 +11,8 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginBottom="80dp"
-        android:orientation="vertical"
-        android:background="@color/background_color">
+        android:background="@color/background_color"
+        android:orientation="vertical">
 
         <!-- Top Purple Section -->
         <RelativeLayout
@@ -29,9 +29,9 @@
                 android:layout_height="80dp"
                 android:layout_centerHorizontal="true"
                 android:layout_marginTop="60dp"
-                android:src="@drawable/profile_placeholder"
+                android:background="@drawable/circle_background"
                 android:scaleType="centerCrop"
-                android:background="@drawable/circle_background" />
+                android:src="@drawable/profile_placeholder" />
 
             <!-- Welcome Text -->
             <TextView
@@ -52,8 +52,8 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1.8"
-            android:orientation="vertical"
             android:background="@android:color/white"
+            android:orientation="vertical"
             android:padding="24dp">
 
             <!-- Good Afternoon Text -->
@@ -61,11 +61,11 @@
                 android:id="@+id/tv_greeting"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
                 android:text="Good Afternoon"
                 android:textColor="@android:color/black"
                 android:textSize="20sp"
-                android:textStyle="bold"
-                android:layout_marginBottom="16dp" />
+                android:textStyle="bold" />
 
             <!-- Clock -->
             <FrameLayout
@@ -78,52 +78,52 @@
                     android:id="@+id/iv_clock"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:src="@drawable/clock_background"
-                    android:scaleType="centerCrop" />
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/clock_background" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
+                    android:layout_marginEnd="30dp"
                     android:text="3"
-                    android:textSize="14sp"
                     android:textColor="@color/purple_text"
-                    android:layout_marginEnd="30dp" />
+                    android:textSize="14sp" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
+                    android:layout_marginTop="30dp"
                     android:text="6"
-                    android:textSize="14sp"
                     android:textColor="@color/purple_text"
-                    android:layout_marginTop="30dp" />
+                    android:textSize="14sp" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
+                    android:layout_marginStart="30dp"
                     android:text="9"
-                    android:textSize="14sp"
                     android:textColor="@color/purple_text"
-                    android:layout_marginStart="30dp" />
+                    android:textSize="14sp" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
+                    android:layout_marginBottom="30dp"
                     android:text="12"
-                    android:textSize="14sp"
                     android:textColor="@color/purple_text"
-                    android:layout_marginBottom="30dp" />
+                    android:textSize="14sp" />
             </FrameLayout>
 
             <!-- Task List Section -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="12dp">
+                android:layout_marginBottom="12dp"
+                android:orientation="horizontal">
 
                 <TextView
                     android:layout_width="0dp"
@@ -139,56 +139,105 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
                 android:background="@drawable/task_list_background"
+                android:orientation="vertical"
                 android:padding="16dp">
 
                 <!-- Add Task Input Section -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
                     android:layout_marginBottom="12dp"
-                    android:gravity="center_vertical">
+                    android:orientation="vertical">
 
-                    <EditText
-                        android:id="@+id/et_new_task"
-                        android:layout_width="0dp"
-                        android:layout_height="36dp"
-                        android:layout_weight="1"
-                        android:hint="Enter new task..."
-                        android:textSize="12sp"
-                        android:paddingStart="8dp"
-                        android:paddingEnd="8dp"
-                        android:background="#FFF"
-                        android:textColor="#000"
-                        android:textColorHint="#000"/>
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
 
-                    <Spinner
-                        android:id="@+id/spinner_task_lists"
-                        android:layout_width="0dp"
-                        android:layout_height="36dp"
-                        android:layout_weight="1"
-                        android:spinnerMode="dropdown"
-                        android:backgroundTint="@android:color/darker_gray" />
+                        <EditText
+                            android:id="@+id/et_new_task"
+                            android:layout_width="0dp"
+                            android:layout_height="36dp"
+                            android:layout_weight="1"
+                            android:background="#FFF"
+                            android:hint="Enter new task..."
+                            android:paddingStart="8dp"
+                            android:paddingEnd="8dp"
+                            android:textColor="#000"
+                            android:textColorHint="#000"
+                            android:textSize="12sp" />
 
-                    <ImageView
-                        android:id="@+id/iv_add_task"
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:layout_marginStart="8dp"
-                        android:src="@drawable/ic_add"
-                        android:background="@drawable/circle_add_background"
-                        android:padding="4dp"
-                        android:clickable="true"
-                        android:focusable="true" />
+                        <Spinner
+                            android:id="@+id/spinner_task_lists"
+                            android:layout_width="0dp"
+                            android:layout_height="36dp"
+                            android:layout_weight="1"
+                            android:backgroundTint="@color/purple_text"
+                            android:popupBackground="@android:color/white"
+                            android:spinnerMode="dropdown" />
+
+                        <ImageView
+                            android:id="@+id/iv_add_task"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:layout_marginStart="8dp"
+                            android:background="@drawable/circle_add_background"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:padding="4dp"
+                            android:src="@drawable/ic_add" />
+                    </LinearLayout>
+
+                    <!-- Date and Time Picker Button -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/tv_due_date_label"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="12dp"
+                            android:text="Due date:"
+                            android:textColor="@android:color/black"
+                            android:textSize="14sp" />
+
+                        <TextView
+                            android:id="@+id/tv_due_date"
+                            android:layout_width="0dp"
+                            android:layout_height="36dp"
+                            android:layout_weight="1"
+                            android:background="#FFF"
+                            android:gravity="center_vertical"
+                            android:paddingStart="8dp"
+                            android:paddingEnd="8dp"
+                            android:text="Not set"
+                            android:textColor="#000"
+                            android:textSize="12sp" />
+
+                        <ImageButton
+                            android:id="@+id/btn_set_date_time"
+                            android:layout_width="36dp"
+                            android:layout_height="36dp"
+                            android:layout_marginStart="8dp"
+                            android:background="@android:color/transparent"
+                            android:contentDescription="Set date and time"
+                            android:padding="4dp"
+                            android:scaleType="fitCenter"
+                            android:src="@drawable/date_picker_logo" />
+                    </LinearLayout>
+
+                    <!-- Task RecyclerView -->
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rv_tasks"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
                 </LinearLayout>
-
-                <!-- Task RecyclerView -->
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/rv_tasks"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>

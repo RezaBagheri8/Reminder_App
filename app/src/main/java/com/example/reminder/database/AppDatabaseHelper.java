@@ -9,11 +9,12 @@ import android.database.sqlite.SQLiteOpenHelper;
 import com.example.reminder.TaskList;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class AppDatabaseHelper extends SQLiteOpenHelper {
 
-    private static final int DATABASE_VERSION = 2;
+    private static final int DATABASE_VERSION = 1;
     private static final String DATABASE_NAME = "reminder_app.db";
 
     // Task Lists table
@@ -28,6 +29,7 @@ public class AppDatabaseHelper extends SQLiteOpenHelper {
     public static final String COLUMN_TASK_TIME = "time";
     public static final String COLUMN_TASK_IS_COMPLETED = "is_completed";
     public static final String COLUMN_TASK_LIST_FK = "task_list_id"; // Foreign key to task_lists table
+    public static final String COLUMN_TASK_DUE_DATE = "due_date"; // For storing the task deadline
 
     private static final String CREATE_TASK_LISTS_TABLE = "CREATE TABLE " + TABLE_TASK_LISTS + "("
             + COLUMN_LIST_ID + " INTEGER PRIMARY KEY,"
@@ -41,8 +43,8 @@ public class AppDatabaseHelper extends SQLiteOpenHelper {
             + COLUMN_TASK_TIME + " TEXT, "
             + COLUMN_TASK_IS_COMPLETED + " INTEGER NOT NULL DEFAULT 0, "
             + COLUMN_TASK_LIST_FK + " INTEGER, "
-            + "FOREIGN KEY(" + COLUMN_TASK_LIST_FK + ") REFERENCES " + TABLE_TASK_LISTS + "(" + COLUMN_LIST_ID
-            + ") ON DELETE CASCADE"
+            + COLUMN_TASK_DUE_DATE + " INTEGER, "
+            + "FOREIGN KEY(" + COLUMN_TASK_LIST_FK + ") REFERENCES " + TABLE_TASK_LISTS + "(" + COLUMN_LIST_ID + ") ON DELETE CASCADE"
             + ");";
 
     public AppDatabaseHelper(Context context) {
@@ -127,12 +129,20 @@ public class AppDatabaseHelper extends SQLiteOpenHelper {
     // --- Task Operations ---
 
     public long createTask(String title, String time, long taskListId) {
+        return createTask(title, time, taskListId, null);
+    }
+
+    public long createTask(String title, String time, long taskListId, Date dueDate) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(COLUMN_TASK_TITLE, title);
         values.put(COLUMN_TASK_TIME, time);
         values.put(COLUMN_TASK_IS_COMPLETED, 0); // Default to not completed
         values.put(COLUMN_TASK_LIST_FK, taskListId);
+
+        if (dueDate != null) {
+            values.put(COLUMN_TASK_DUE_DATE, dueDate.getTime()); // Store as milliseconds since epoch
+        }
 
         long insertId = db.insert(TABLE_TASKS, null, values);
         db.close();
@@ -167,6 +177,14 @@ public class AppDatabaseHelper extends SQLiteOpenHelper {
                         cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_TASK_IS_COMPLETED)) == 1);
                 task.setId(cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_TASK_ID)));
                 task.setTaskListId(cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_TASK_LIST_FK)));
+
+                // Get due date if it exists
+                int dueDateColumnIndex = cursor.getColumnIndex(COLUMN_TASK_DUE_DATE);
+                if (dueDateColumnIndex != -1 && !cursor.isNull(dueDateColumnIndex)) {
+                    long dueDateMillis = cursor.getLong(dueDateColumnIndex);
+                    task.setDueDate(new Date(dueDateMillis));
+                }
+
                 tasks.add(task);
             } while (cursor.moveToNext());
         }
@@ -189,11 +207,59 @@ public class AppDatabaseHelper extends SQLiteOpenHelper {
                         cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_TASK_IS_COMPLETED)) == 1);
                 task.setId(cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_TASK_ID)));
                 task.setTaskListId(cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_TASK_LIST_FK)));
+
+                // Get due date if it exists
+                int dueDateColumnIndex = cursor.getColumnIndex(COLUMN_TASK_DUE_DATE);
+                if (dueDateColumnIndex != -1 && !cursor.isNull(dueDateColumnIndex)) {
+                    long dueDateMillis = cursor.getLong(dueDateColumnIndex);
+                    task.setDueDate(new Date(dueDateMillis));
+                }
+
                 tasks.add(task);
             } while (cursor.moveToNext());
         }
         cursor.close();
         db.close();
         return tasks;
+    }
+
+    /**
+     * Get a task by its ID
+     * @param taskId The ID of the task to retrieve
+     * @return The task with the specified ID, or null if not found
+     */
+    public com.example.reminder.Task getTaskById(long taskId) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.query(
+                TABLE_TASKS,
+                null,
+                COLUMN_TASK_ID + " = ?",
+                new String[]{String.valueOf(taskId)},
+                null,
+                null,
+                null);
+
+        com.example.reminder.Task task = null;
+
+        if (cursor.moveToFirst()) {
+            task = new com.example.reminder.Task(
+                    cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_TASK_TITLE)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_TASK_TIME)),
+                    cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_TASK_IS_COMPLETED)) == 1
+            );
+            task.setId(cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_TASK_ID)));
+            task.setTaskListId(cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_TASK_LIST_FK)));
+
+            // Get due date if it exists
+            int dueDateColumnIndex = cursor.getColumnIndex(COLUMN_TASK_DUE_DATE);
+            if (dueDateColumnIndex != -1 && !cursor.isNull(dueDateColumnIndex)) {
+                long dueDateMillis = cursor.getLong(dueDateColumnIndex);
+                task.setDueDate(new Date(dueDateMillis));
+            }
+        }
+
+        cursor.close();
+        db.close();
+        return task;
     }
 }

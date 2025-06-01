@@ -21,27 +21,45 @@
             android:scaleX="1.0"
             android:scaleY="1.0" />
 
-        <TextView
-            android:id="@+id/tv_task_title"
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Task Title"
-            android:textColor="@android:color/black"
-            android:textSize="14sp"
-            android:maxLines="2"
-            android:ellipsize="end"
-            android:layout_marginStart="8dp" />
+            android:orientation="vertical">
 
+            <TextView
+                android:id="@+id/tv_task_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Task Title"
+                android:textColor="@android:color/black"
+                android:textSize="16sp"
+                android:maxLines="2"
+                android:ellipsize="end" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="4dp">
+
+                <TextView
+                    android:id="@+id/tv_task_due_date"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Due: Not set"
+                    android:textColor="#666666"
+                    android:textSize="12sp"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/tv_task_list_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:textSize="12sp"
+                    android:textColor="@android:color/darker_gray" />
+            </LinearLayout>
+        </LinearLayout>
     </LinearLayout>
-
-    <TextView
-        android:id="@+id/tv_task_list_name"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="48dp"
-        android:layout_marginTop="4dp"
-        android:textSize="12sp"
-        android:textColor="@android:color/darker_gray" />
-
 </LinearLayout>
