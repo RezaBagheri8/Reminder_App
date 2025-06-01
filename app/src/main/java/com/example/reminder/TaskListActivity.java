@@ -56,13 +56,13 @@ public class TaskListActivity extends BaseActivity implements TaskListAdapter.On
 
     @Override
     public void onTaskListClick(int position) {
-        if (position >= 0 && position < taskLists.size()) {
-            TaskList taskList = taskLists.get(position);
-            Intent intent = new Intent(this, TaskListDetailsActivity.class);
-            intent.putExtra(TaskListDetailsActivity.EXTRA_TASK_LIST_ID, (long) taskList.getId());
-            intent.putExtra(TaskListDetailsActivity.EXTRA_TASK_LIST_NAME, taskList.getName());
-            startActivity(intent);
-        }
+//        if (position >= 0 && position < taskLists.size()) {
+//            TaskList taskList = taskLists.get(position);
+//            Intent intent = new Intent(this, TaskListDetailsActivity.class);
+//            intent.putExtra(TaskListDetailsActivity.EXTRA_TASK_LIST_ID, (long) taskList.getId());
+//            intent.putExtra(TaskListDetailsActivity.EXTRA_TASK_LIST_NAME, taskList.getName());
+//            startActivity(intent);
+//        }
     }
 
     @Override

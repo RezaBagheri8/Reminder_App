@@ -37,6 +37,9 @@ dependencies {
     implementation(libs.activity)
     implementation(libs.constraintlayout)
     implementation(libs.recyclerview)
+    
+    // Core dependencies for notifications
+    implementation("androidx.core:core:1.12.0")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
