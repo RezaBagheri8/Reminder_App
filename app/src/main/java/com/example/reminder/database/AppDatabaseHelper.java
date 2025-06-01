@@ -13,7 +13,7 @@ import java.util.List;
 
 public class AppDatabaseHelper extends SQLiteOpenHelper {
 
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
     private static final String DATABASE_NAME = "reminder_app.db";
 
     // Task Lists table
@@ -41,7 +41,8 @@ public class AppDatabaseHelper extends SQLiteOpenHelper {
             + COLUMN_TASK_TIME + " TEXT, "
             + COLUMN_TASK_IS_COMPLETED + " INTEGER NOT NULL DEFAULT 0, "
             + COLUMN_TASK_LIST_FK + " INTEGER, "
-            + "FOREIGN KEY(" + COLUMN_TASK_LIST_FK + ") REFERENCES " + TABLE_TASK_LISTS + "(" + COLUMN_LIST_ID + ") ON DELETE CASCADE"
+            + "FOREIGN KEY(" + COLUMN_TASK_LIST_FK + ") REFERENCES " + TABLE_TASK_LISTS + "(" + COLUMN_LIST_ID
+            + ") ON DELETE CASCADE"
             + ");";
 
     public AppDatabaseHelper(Context context) {
@@ -77,10 +78,11 @@ public class AppDatabaseHelper extends SQLiteOpenHelper {
     public List<TaskList> getAllTaskLists() {
         List<TaskList> taskList = new ArrayList<>();
         // Select all task lists and count the number of tasks for each list
-        String selectQuery = "SELECT tl." + COLUMN_LIST_ID + ", tl." + COLUMN_LIST_NAME + ", COUNT(t." + COLUMN_TASK_ID + ") AS task_count " +
-                             "FROM " + TABLE_TASK_LISTS + " tl " +
-                             "LEFT JOIN " + TABLE_TASKS + " t ON tl." + COLUMN_LIST_ID + " = t." + COLUMN_TASK_LIST_FK +
-                             " GROUP BY tl." + COLUMN_LIST_ID + ", tl." + COLUMN_LIST_NAME;
+        String selectQuery = "SELECT tl." + COLUMN_LIST_ID + ", tl." + COLUMN_LIST_NAME + ", COUNT(t." + COLUMN_TASK_ID
+                + ") AS task_count " +
+                "FROM " + TABLE_TASK_LISTS + " tl " +
+                "LEFT JOIN " + TABLE_TASKS + " t ON tl." + COLUMN_LIST_ID + " = t." + COLUMN_TASK_LIST_FK +
+                " GROUP BY tl." + COLUMN_LIST_ID + ", tl." + COLUMN_LIST_NAME;
 
         SQLiteDatabase db = this.getWritableDatabase();
         Cursor cursor = db.rawQuery(selectQuery, null);
@@ -101,10 +103,25 @@ public class AppDatabaseHelper extends SQLiteOpenHelper {
 
     public void deleteTaskList(TaskList taskList) {
         SQLiteDatabase db = this.getWritableDatabase();
-        // Deleting a task list will automatically delete its associated tasks due to ON DELETE CASCADE
-        db.delete(TABLE_TASK_LISTS, COLUMN_LIST_ID + " = ?",
-                new String[]{String.valueOf(taskList.getId())});
-        db.close();
+        try {
+            // Start a transaction to ensure both operations complete or none do
+            db.beginTransaction();
+
+            // First delete all tasks associated with this task list
+            db.delete(TABLE_TASKS, COLUMN_TASK_LIST_FK + " = ?",
+                    new String[] { String.valueOf(taskList.getId()) });
+
+            // Then delete the task list itself
+            db.delete(TABLE_TASK_LISTS, COLUMN_LIST_ID + " = ?",
+                    new String[] { String.valueOf(taskList.getId()) });
+
+            // Mark transaction as successful
+            db.setTransactionSuccessful();
+        } finally {
+            // End transaction
+            db.endTransaction();
+            db.close();
+        }
     }
 
     // --- Task Operations ---
@@ -126,13 +143,13 @@ public class AppDatabaseHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(COLUMN_TASK_IS_COMPLETED, isCompleted ? 1 : 0);
-        db.update(TABLE_TASKS, values, COLUMN_TASK_ID + " = ?", new String[]{String.valueOf(taskId)});
+        db.update(TABLE_TASKS, values, COLUMN_TASK_ID + " = ?", new String[] { String.valueOf(taskId) });
         db.close();
     }
 
     public void deleteTask(long taskId) {
         SQLiteDatabase db = this.getWritableDatabase();
-        db.delete(TABLE_TASKS, COLUMN_TASK_ID + " = ?", new String[]{String.valueOf(taskId)});
+        db.delete(TABLE_TASKS, COLUMN_TASK_ID + " = ?", new String[] { String.valueOf(taskId) });
         db.close();
     }
 
@@ -147,8 +164,7 @@ public class AppDatabaseHelper extends SQLiteOpenHelper {
                 com.example.reminder.Task task = new com.example.reminder.Task(
                         cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_TASK_TITLE)),
                         cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_TASK_TIME)),
-                        cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_TASK_IS_COMPLETED)) == 1
-                );
+                        cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_TASK_IS_COMPLETED)) == 1);
                 task.setId(cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_TASK_ID)));
                 task.setTaskListId(cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_TASK_LIST_FK)));
                 tasks.add(task);
@@ -163,15 +179,14 @@ public class AppDatabaseHelper extends SQLiteOpenHelper {
         List<com.example.reminder.Task> tasks = new ArrayList<>();
         String selectQuery = "SELECT * FROM " + TABLE_TASKS + " WHERE " + COLUMN_TASK_LIST_FK + " = ?";
         SQLiteDatabase db = this.getWritableDatabase();
-        Cursor cursor = db.rawQuery(selectQuery, new String[]{String.valueOf(taskListId)});
+        Cursor cursor = db.rawQuery(selectQuery, new String[] { String.valueOf(taskListId) });
 
         if (cursor.moveToFirst()) {
             do {
                 com.example.reminder.Task task = new com.example.reminder.Task(
                         cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_TASK_TITLE)),
                         cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_TASK_TIME)),
-                        cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_TASK_IS_COMPLETED)) == 1
-                );
+                        cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_TASK_IS_COMPLETED)) == 1);
                 task.setId(cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_TASK_ID)));
                 task.setTaskListId(cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_TASK_LIST_FK)));
                 tasks.add(task);

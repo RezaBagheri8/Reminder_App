@@ -5,11 +5,15 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -21,8 +25,10 @@ import com.google.android.material.navigation.NavigationBarView;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class MainActivity extends BaseActivity implements TaskAdapter.OnTaskClickListener {
 
@@ -32,7 +38,11 @@ public class MainActivity extends BaseActivity implements TaskAdapter.OnTaskClic
     private List<Task> taskList;
     private ImageView ivAddTask;
     private EditText etNewTask;
+    private Spinner spinnerTaskLists;
     private AppDatabaseHelper dbHelper;
+    private List<TaskList> taskLists;
+    private Map<Long, String> taskListNames;
+    private ActivityResultLauncher<Intent> taskListLauncher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,18 +52,44 @@ public class MainActivity extends BaseActivity implements TaskAdapter.OnTaskClic
         setupBottomNavigation();
 
         dbHelper = new AppDatabaseHelper(this);
+        taskListNames = new HashMap<>();
+        taskList = new ArrayList<>();
 
+        // Initialize the activity result launcher
+        taskListLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == RESULT_OK) {
+                        // Refresh everything when returning from TaskListActivity after a deletion
+                        refreshAllData();
+                    }
+                });
 
         initViews();
         setupGreeting();
-        setupTaskList(); // This will now load from DB
+        setupTaskLists();
+        setupTaskList();
+        setupRecyclerView();
+    }
+
+    private void refreshAllData() {
+        // Clear and reload all data
+        taskListNames.clear();
+        taskList.clear();
+        setupTaskLists();
+        setupTaskList();
         setupRecyclerView();
     }
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
-
+    protected void onResume() {
+        super.onResume();
+        refreshAllData();
+        // Refresh task lists when returning to this activity
+        setupTaskLists();
+        // Also refresh tasks to remove any tasks from deleted task lists
+        setupTaskList();
+        setupRecyclerView();
     }
 
     private void initViews() {
@@ -61,6 +97,7 @@ public class MainActivity extends BaseActivity implements TaskAdapter.OnTaskClic
         rvTasks = findViewById(R.id.rv_tasks);
         ivAddTask = findViewById(R.id.iv_add_task);
         etNewTask = findViewById(R.id.et_new_task);
+        spinnerTaskLists = findViewById(R.id.spinner_task_lists);
 
         // Set click listener for add button
         ivAddTask.setOnClickListener(v -> addNewTaskFromInput());
@@ -82,17 +119,37 @@ public class MainActivity extends BaseActivity implements TaskAdapter.OnTaskClic
         tvGreeting.setText(greeting);
     }
 
+    private void setupTaskLists() {
+        taskLists = dbHelper.getAllTaskLists();
+        List<String> taskListNames = new ArrayList<>();
+        taskListNames.add("No List"); // Add default option
+
+        for (TaskList taskList : taskLists) {
+            taskListNames.add(taskList.getName());
+            this.taskListNames.put(Long.valueOf(taskList.getId()), taskList.getName());
+        }
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_item, taskListNames);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerTaskLists.setAdapter(adapter);
+    }
+
     private void setupTaskList() {
-        taskList = dbHelper.getAllTasks(); // Load tasks from database
+        taskList.clear();
+        taskList.addAll(dbHelper.getAllTasks());
     }
 
     private void setupRecyclerView() {
-        taskAdapter = new TaskAdapter(taskList);
-        taskAdapter.setOnTaskClickListener(this);
-
-        rvTasks.setLayoutManager(new LinearLayoutManager(this));
-        rvTasks.setAdapter(taskAdapter);
-        rvTasks.setNestedScrollingEnabled(false);
+        if (taskAdapter == null) {
+            taskAdapter = new TaskAdapter(taskList, taskListNames);
+            taskAdapter.setOnTaskClickListener(this);
+            rvTasks.setLayoutManager(new LinearLayoutManager(this));
+            rvTasks.setAdapter(taskAdapter);
+            rvTasks.setNestedScrollingEnabled(false);
+        } else {
+            taskAdapter.notifyDataSetChanged();
+        }
     }
 
     @Override
@@ -100,13 +157,10 @@ public class MainActivity extends BaseActivity implements TaskAdapter.OnTaskClic
         if (position >= 0 && position < taskList.size()) {
             Task task = taskList.get(position);
             task.setCompleted(isChecked);
-            dbHelper.updateTaskCompletion(task.getId(), isChecked); // Update completion in DB
-            // Don't call updateTask here since it causes layout conflicts
-            // The task is already updated in memory, no need to notify adapter
+            dbHelper.updateTaskCompletion(task.getId(), isChecked);
         }
     }
 
-    // Method to add new task from input field
     private void addNewTaskFromInput() {
         String taskTitle = etNewTask.getText().toString().trim();
 
@@ -115,16 +169,24 @@ public class MainActivity extends BaseActivity implements TaskAdapter.OnTaskClic
             return;
         }
 
+        // Get selected task list ID
+        int selectedPosition = spinnerTaskLists.getSelectedItemPosition();
+        long taskListId = 0; // Default to no list
+        if (selectedPosition > 0) { // If not "No List"
+            taskListId = taskLists.get(selectedPosition - 1).getId();
+        }
+
         // Get current time for the task
         Calendar calendar = Calendar.getInstance();
         SimpleDateFormat timeFormat = new SimpleDateFormat("h:mma", Locale.getDefault());
         String currentTime = timeFormat.format(calendar.getTime());
 
         // Create new task and add to the database
-        long newTaskId = dbHelper.createTask(taskTitle, currentTime, 0); // Assuming taskListId 0 for now
+        long newTaskId = dbHelper.createTask(taskTitle, currentTime, taskListId);
         Task newTask = new Task(taskTitle, currentTime, false);
         newTask.setId(newTaskId);
-        taskList.add(0, newTask); // Add to top of list
+        newTask.setTaskListId(taskListId);
+        taskList.add(0, newTask);
         taskAdapter.notifyItemInserted(0);
 
         // Scroll to top to show the new task

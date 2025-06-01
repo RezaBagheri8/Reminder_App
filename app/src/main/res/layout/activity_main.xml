@@ -151,15 +151,6 @@
                     android:layout_marginBottom="12dp"
                     android:gravity="center_vertical">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Task list"
-                        android:textColor="@android:color/black"
-                        android:textSize="14sp"
-                        android:textStyle="bold"
-                        android:layout_marginEnd="12dp" />
-
                     <EditText
                         android:id="@+id/et_new_task"
                         android:layout_width="0dp"
@@ -172,6 +163,14 @@
                         android:background="#FFF"
                         android:textColor="#000"
                         android:textColorHint="#000"/>
+
+                    <Spinner
+                        android:id="@+id/spinner_task_lists"
+                        android:layout_width="0dp"
+                        android:layout_height="36dp"
+                        android:layout_weight="1"
+                        android:spinnerMode="dropdown"
+                        android:backgroundTint="@android:color/darker_gray" />
 
                     <ImageView
                         android:id="@+id/iv_add_task"
