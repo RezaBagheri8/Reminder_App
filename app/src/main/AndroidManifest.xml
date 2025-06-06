@@ -31,10 +31,10 @@
             android:name=".TaskListActivity"
             android:label="Task Lists"
             android:parentActivityName=".MainActivity" />
-<!--        <activity-->
-<!--            android:name=".TaskListDetailsActivity"-->
-<!--            android:label="Task List Details"-->
-<!--            android:parentActivityName=".TaskListActivity" />-->
+        <activity
+            android:name=".TaskListDetailsActivity"
+            android:label="Task List Details"
+            android:parentActivityName=".TaskListActivity" />
 
         <!-- Register the AlarmReceiver to handle alarms -->
         <receiver
