@@ -5,7 +5,7 @@
     android:id="@+id/main_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/background_color"
+    android:background="#150029"
     tools:context=".TaskListActivity">
 
     <!-- Main Content Container -->
@@ -13,7 +13,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginBottom="80dp"
-        android:background="@color/background_color">
+        android:background="#150029">
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerViewTaskLists"

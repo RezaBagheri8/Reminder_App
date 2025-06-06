@@ -7,7 +7,7 @@ public class Task {
     private String title;
     private boolean isCompleted;
     private String time;
-    private long taskListId;
+    private long taskListId = -1; // Initialize to -1 to indicate no task list
     private Date dueDate; // For storing the full date and time for the task deadline
 
     public Task(String title, String time) {
@@ -21,7 +21,7 @@ public class Task {
         this.time = time;
         this.isCompleted = isCompleted;
     }
-    
+
     public Task(String title, String time, boolean isCompleted, Date dueDate) {
         this.title = title;
         this.time = time;
@@ -72,11 +72,11 @@ public class Task {
     public void setTaskListId(long taskListId) {
         this.taskListId = taskListId;
     }
-    
+
     public Date getDueDate() {
         return dueDate;
     }
-    
+
     public void setDueDate(Date dueDate) {
         this.dueDate = dueDate;
     }

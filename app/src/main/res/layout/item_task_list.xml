@@ -14,7 +14,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="16dp"
-        android:background="@color/task_background">
+        android:background="#18001F">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -29,7 +29,7 @@
                 android:layout_height="wrap_content"
                 android:textStyle="bold"
                 android:textSize="18sp"
-                android:textColor="@color/purple_text"
+                android:textColor="@color/white"
                 android:maxLines="1"
                 android:ellipsize="end" />
 
@@ -52,7 +52,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:padding="8dp"
             android:src="@android:drawable/ic_menu_delete"
-            app:tint="@color/purple_text" />
+            app:tint="#FF0000" />
 
     </RelativeLayout>
 

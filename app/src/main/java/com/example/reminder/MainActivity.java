@@ -2,13 +2,17 @@ package com.example.reminder;
 
 import android.app.AlarmManager;
 import android.app.DatePickerDialog;
+import android.app.Dialog;
 import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.Editable;
 import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.DatePicker;
@@ -34,6 +38,7 @@ import com.example.reminder.notification.NotificationHelper;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationBarView;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -46,26 +51,28 @@ import java.util.Map;
 public class MainActivity extends BaseActivity implements TaskAdapter.OnTaskClickListener {
 
     private TextView tvGreeting;
-    private RecyclerView rvTasks;
-    private TaskAdapter taskAdapter;
-    private List<Task> taskList;
-    private ImageView ivAddTask;
-    private EditText etNewTask;
-    private Spinner spinnerTaskLists;
+    private RecyclerView rvIncompleteTasks;
+    private RecyclerView rvCompletedTasks;
+    private TaskAdapter incompleteTasksAdapter;
+    private TaskAdapter completedTasksAdapter;
+    private List<Task> incompleteTaskList;
+    private List<Task> completedTaskList;
     private AppDatabaseHelper dbHelper;
     private List<TaskList> taskLists;
     private Map<Long, String> taskListNames;
     private ActivityResultLauncher<Intent> taskListLauncher;
 
-    // Date and time picker components
-    private ImageButton btnSetDateTime;
-    private TextView tvDueDate;
-    private Calendar selectedDateTime;
-    private boolean hasSetDueDate = false;
+    // Date navigation components
+    private ImageButton btnPreviousDay;
+    private ImageButton btnNextDay;
+    private TextView tvCurrentDate;
+    private Calendar selectedDate;
+    private SimpleDateFormat dateFormat;
+    private SimpleDateFormat dayFormat;
 
     // Permission request launcher for notifications (Android 13+)
-    private final ActivityResultLauncher<String> requestPermissionLauncher =
-            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+    private final ActivityResultLauncher<String> requestPermissionLauncher = registerForActivityResult(
+            new ActivityResultContracts.RequestPermission(), isGranted -> {
                 if (isGranted) {
                     // Permission granted, can show notifications
                     Toast.makeText(this, "Notification permission granted", Toast.LENGTH_SHORT).show();
@@ -85,14 +92,19 @@ public class MainActivity extends BaseActivity implements TaskAdapter.OnTaskClic
 
         dbHelper = new AppDatabaseHelper(this);
         taskListNames = new HashMap<>();
-        taskList = new ArrayList<>();
+        incompleteTaskList = new ArrayList<>();
+        completedTaskList = new ArrayList<>();
+
+        // Initialize date formats
+        dateFormat = new SimpleDateFormat("MMM d, yyyy", Locale.getDefault());
+        dayFormat = new SimpleDateFormat("EEEE", Locale.getDefault());
+        selectedDate = Calendar.getInstance();
 
         // Initialize the activity result launcher
         taskListLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
                     if (result.getResultCode() == RESULT_OK) {
-                        // Refresh everything when returning from TaskListActivity after a deletion
                         refreshAllData();
                     }
                 });
@@ -110,16 +122,16 @@ public class MainActivity extends BaseActivity implements TaskAdapter.OnTaskClic
         setupGreeting();
         setupTaskLists();
         setupTaskList();
-        setupRecyclerView();
+        setupRecyclerViews();
     }
 
     private void refreshAllData() {
-        // Clear and reload all data
         taskListNames.clear();
-        taskList.clear();
+        incompleteTaskList.clear();
+        completedTaskList.clear();
         setupTaskLists();
         setupTaskList();
-        setupRecyclerView();
+        setupRecyclerViews();
     }
 
     /**
@@ -127,7 +139,8 @@ public class MainActivity extends BaseActivity implements TaskAdapter.OnTaskClic
      */
     private void requestNotificationPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this, android.Manifest.permission.POST_NOTIFICATIONS)) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                    android.Manifest.permission.POST_NOTIFICATIONS)) {
                 // Explain to the user why we need the permission
                 Toast.makeText(this, "Notification permission is needed to remind you about task deadlines",
                         Toast.LENGTH_LONG).show();
@@ -158,31 +171,36 @@ public class MainActivity extends BaseActivity implements TaskAdapter.OnTaskClic
     @Override
     protected void onResume() {
         super.onResume();
+        selectedDate = Calendar.getInstance(); // Reset to today
+        updateCurrentDateDisplay();
         refreshAllData();
         // Refresh task lists when returning to this activity
         setupTaskLists();
         // Also refresh tasks to remove any tasks from deleted task lists
         setupTaskList();
-        setupRecyclerView();
+        setupRecyclerViews();
     }
 
     private void initViews() {
         tvGreeting = findViewById(R.id.tv_greeting);
-        rvTasks = findViewById(R.id.rv_tasks);
-        ivAddTask = findViewById(R.id.iv_add_task);
-        etNewTask = findViewById(R.id.et_new_task);
+        rvIncompleteTasks = findViewById(R.id.rv_incomplete_tasks);
+        rvCompletedTasks = findViewById(R.id.rv_completed_tasks);
 
-        // Initialize date and time picker components
-        btnSetDateTime = findViewById(R.id.btn_set_date_time);
-        tvDueDate = findViewById(R.id.tv_due_date);
-        selectedDateTime = Calendar.getInstance();
-        spinnerTaskLists = findViewById(R.id.spinner_task_lists);
+        // Initialize add task button
+        Button btnAddTask = findViewById(R.id.btn_add_task);
+        btnAddTask.setOnClickListener(v -> showAddTaskDialog());
 
-        // Set click listener for add button
-        ivAddTask.setOnClickListener(v -> addNewTaskFromInput());
+        // Initialize date navigation components
+        btnPreviousDay = findViewById(R.id.btn_previous_day);
+        btnNextDay = findViewById(R.id.btn_next_day);
+        tvCurrentDate = findViewById(R.id.tv_current_date);
+        updateCurrentDateDisplay();
 
-        // Set click listener for date time button
-        btnSetDateTime.setOnClickListener(v -> showDateTimePicker());
+        // Set click listener for previous day button
+        btnPreviousDay.setOnClickListener(v -> previousDay());
+
+        // Set click listener for next day button
+        btnNextDay.setOnClickListener(v -> nextDay());
     }
 
     private void setupGreeting() {
@@ -210,149 +228,222 @@ public class MainActivity extends BaseActivity implements TaskAdapter.OnTaskClic
             taskListNames.add(taskList.getName());
             this.taskListNames.put(Long.valueOf(taskList.getId()), taskList.getName());
         }
-
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
-                R.layout.spinner_item, taskListNames);
-        adapter.setDropDownViewResource(R.layout.spinner_dropdown_item);
-        spinnerTaskLists.setAdapter(adapter);
     }
 
     private void setupTaskList() {
-        taskList.clear();
-        taskList.addAll(dbHelper.getAllTasks());
+        incompleteTaskList.clear();
+        completedTaskList.clear();
+        List<Task> allTasks = dbHelper.getAllTasks();
+
+        // Filter tasks for selected date
+        for (Task task : allTasks) {
+            if (task.getDueDate() != null) {
+                Calendar taskDate = Calendar.getInstance();
+                taskDate.setTime(task.getDueDate());
+
+                // Compare year, month and day
+                if (taskDate.get(Calendar.YEAR) == selectedDate.get(Calendar.YEAR) &&
+                        taskDate.get(Calendar.MONTH) == selectedDate.get(Calendar.MONTH) &&
+                        taskDate.get(Calendar.DAY_OF_MONTH) == selectedDate.get(Calendar.DAY_OF_MONTH)) {
+
+                    if (task.isCompleted()) {
+                        completedTaskList.add(task);
+                    } else {
+                        incompleteTaskList.add(task);
+                    }
+                }
+            }
+        }
     }
 
-    private void setupRecyclerView() {
-        if (taskAdapter == null) {
-            taskAdapter = new TaskAdapter(taskList, taskListNames);
-            taskAdapter.setOnTaskClickListener(this);
-            rvTasks.setLayoutManager(new LinearLayoutManager(this));
-            rvTasks.setAdapter(taskAdapter);
-            rvTasks.setNestedScrollingEnabled(false);
+    private void setupRecyclerViews() {
+        // Setup incomplete tasks RecyclerView
+        if (incompleteTasksAdapter == null) {
+            incompleteTasksAdapter = new TaskAdapter(incompleteTaskList, taskListNames);
+            incompleteTasksAdapter.setOnTaskClickListener(this);
+            rvIncompleteTasks.setLayoutManager(new LinearLayoutManager(this));
+            rvIncompleteTasks.setAdapter(incompleteTasksAdapter);
         } else {
-            taskAdapter.notifyDataSetChanged();
+            incompleteTasksAdapter.notifyDataSetChanged();
+        }
+
+        // Setup completed tasks RecyclerView
+        if (completedTasksAdapter == null) {
+            completedTasksAdapter = new TaskAdapter(completedTaskList, taskListNames);
+            completedTasksAdapter.setOnTaskClickListener(this);
+            rvCompletedTasks.setLayoutManager(new LinearLayoutManager(this));
+            rvCompletedTasks.setAdapter(completedTasksAdapter);
+        } else {
+            completedTasksAdapter.notifyDataSetChanged();
         }
     }
 
     @Override
     public void onTaskChecked(int position, boolean isChecked) {
-        if (position >= 0 && position < taskList.size()) {
-            Task task = taskList.get(position);
-            task.setCompleted(isChecked);
-            dbHelper.updateTaskCompletion(task.getId(), isChecked); // Update completion in DB
+        Task task;
+        if (isChecked) {
+            // Task is being completed
+            task = incompleteTaskList.get(position);
+            task.setCompleted(true);
+            incompleteTaskList.remove(position);
+            completedTaskList.add(0, task);
 
-            // If task is completed and has a due date, cancel any scheduled notifications
-            // This is also handled in the adapter, but we do it here as well for redundancy
-            if (isChecked && task.getDueDate() != null) {
+            // Cancel any scheduled notifications
+            if (task.getDueDate() != null) {
                 AlarmScheduler.cancelTaskReminder(this, task.getId());
             }
+        } else {
+            // Task is being uncompleted
+            task = completedTaskList.get(position);
+            task.setCompleted(false);
+            completedTaskList.remove(position);
+            incompleteTaskList.add(0, task);
 
-            // Don't call updateTask here since it causes layout conflicts
-            // The task is already updated in memory, no need to notify adapter
-        }
-    }
-
-    /**
-     * Shows the date picker dialog, followed by the time picker dialog
-     */
-    private void showDateTimePicker() {
-        final Calendar currentDate = Calendar.getInstance();
-        int year = currentDate.get(Calendar.YEAR);
-        int month = currentDate.get(Calendar.MONTH);
-        int day = currentDate.get(Calendar.DAY_OF_MONTH);
-
-        DatePickerDialog datePickerDialog = new DatePickerDialog(this,
-                (view, selectedYear, selectedMonth, selectedDay) -> {
-                    selectedDateTime.set(Calendar.YEAR, selectedYear);
-                    selectedDateTime.set(Calendar.MONTH, selectedMonth);
-                    selectedDateTime.set(Calendar.DAY_OF_MONTH, selectedDay);
-
-                    // After date is set, show time picker
-                    showTimePicker();
-                }, year, month, day);
-
-        // Set minimum date to today
-        datePickerDialog.getDatePicker().setMinDate(System.currentTimeMillis() - 1000);
-        datePickerDialog.show();
-    }
-
-    /**
-     * Shows the time picker dialog after date has been selected
-     */
-    private void showTimePicker() {
-        final Calendar currentTime = Calendar.getInstance();
-        int hour = currentTime.get(Calendar.HOUR_OF_DAY);
-        int minute = currentTime.get(Calendar.MINUTE);
-
-        TimePickerDialog timePickerDialog = new TimePickerDialog(this,
-                (view, selectedHour, selectedMinute) -> {
-                    selectedDateTime.set(Calendar.HOUR_OF_DAY, selectedHour);
-                    selectedDateTime.set(Calendar.MINUTE, selectedMinute);
-                    selectedDateTime.set(Calendar.SECOND, 0);
-
-                    // Format and display the selected date and time
-                    updateDueDateDisplay();
-                    hasSetDueDate = true;
-                }, hour, minute, false);
-
-        timePickerDialog.show();
-    }
-
-    /**
-     * Updates the due date display with the selected date and time
-     */
-    private void updateDueDateDisplay() {
-        SimpleDateFormat dateTimeFormat = new SimpleDateFormat("MMM dd, yyyy 'at' h:mm a", Locale.getDefault());
-        String formattedDateTime = dateTimeFormat.format(selectedDateTime.getTime());
-        tvDueDate.setText(formattedDateTime);
-    }
-
-    // Method to add new task from input field
-    private void addNewTaskFromInput() {
-        String taskTitle = etNewTask.getText().toString().trim();
-
-        if (TextUtils.isEmpty(taskTitle)) {
-            Toast.makeText(this, "Please enter a task", Toast.LENGTH_SHORT).show();
-            return;
+            // Reschedule notification if task has a due date
+            if (task.getDueDate() != null) {
+                scheduleTaskReminder(task);
+            }
         }
 
-        // Get selected task list ID
-        int selectedPosition = spinnerTaskLists.getSelectedItemPosition();
-        long taskListId = 0; // Default to no list
-        if (selectedPosition > 0) { // If not "No List"
-            taskListId = taskLists.get(selectedPosition - 1).getId();
+        // Update task completion status in database
+        dbHelper.updateTaskCompletion(task.getId(), isChecked);
+
+        // Refresh both adapters
+        incompleteTasksAdapter.notifyDataSetChanged();
+        completedTasksAdapter.notifyDataSetChanged();
+    }
+
+    private void showAddTaskDialog() {
+        Dialog dialog = new Dialog(this);
+        dialog.setContentView(R.layout.dialog_add_task);
+        dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+
+        EditText etTaskName = dialog.findViewById(R.id.et_task_name);
+        TextView tvSelectedDate = dialog.findViewById(R.id.tv_selected_date);
+        TextView tvSelectedTime = dialog.findViewById(R.id.tv_selected_time);
+        Spinner spinnerTaskList = dialog.findViewById(R.id.spinner_task_list);
+        Button btnCancel = dialog.findViewById(R.id.btn_cancel);
+        Button btnSave = dialog.findViewById(R.id.btn_save);
+
+        // Setup task list spinner
+        setupTaskListSpinner(spinnerTaskList);
+
+        // Date picker
+        View datePickerLayout = dialog.findViewById(R.id.date_picker_layout);
+        datePickerLayout.setOnClickListener(v -> {
+            Calendar calendar = Calendar.getInstance();
+            DatePickerDialog datePickerDialog = new DatePickerDialog(
+                    this,
+                    (view, year, month, dayOfMonth) -> {
+                        Calendar selectedDate = Calendar.getInstance();
+                        selectedDate.set(year, month, dayOfMonth);
+                        tvSelectedDate.setText(new SimpleDateFormat("MMM d, yyyy", Locale.getDefault())
+                                .format(selectedDate.getTime()));
+                        validateForm(etTaskName, tvSelectedDate, tvSelectedTime, btnSave);
+                    },
+                    calendar.get(Calendar.YEAR),
+                    calendar.get(Calendar.MONTH),
+                    calendar.get(Calendar.DAY_OF_MONTH));
+            datePickerDialog.show();
+        });
+
+        // Time picker
+        View timePickerLayout = dialog.findViewById(R.id.time_picker_layout);
+        timePickerLayout.setOnClickListener(v -> {
+            Calendar calendar = Calendar.getInstance();
+            TimePickerDialog timePickerDialog = new TimePickerDialog(
+                    this,
+                    (view, hourOfDay, minute) -> {
+                        Calendar selectedTime = Calendar.getInstance();
+                        selectedTime.set(Calendar.HOUR_OF_DAY, hourOfDay);
+                        selectedTime.set(Calendar.MINUTE, minute);
+                        tvSelectedTime.setText(new SimpleDateFormat("HH:mm", Locale.getDefault())
+                                .format(selectedTime.getTime()));
+                        validateForm(etTaskName, tvSelectedDate, tvSelectedTime, btnSave);
+                    },
+                    calendar.get(Calendar.HOUR_OF_DAY),
+                    calendar.get(Calendar.MINUTE),
+                    true);
+            timePickerDialog.show();
+        });
+
+        // Text change listener for task name
+        etTaskName.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                validateForm(etTaskName, tvSelectedDate, tvSelectedTime, btnSave);
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+        });
+
+        // Cancel button
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+
+        // Save button
+        btnSave.setEnabled(false);
+        btnSave.setOnClickListener(v -> {
+            String taskName = etTaskName.getText().toString();
+            String dateStr = tvSelectedDate.getText().toString();
+            String timeStr = tvSelectedTime.getText().toString();
+
+            try {
+                // Parse date and time
+                SimpleDateFormat dateFormat = new SimpleDateFormat("MMM d, yyyy HH:mm", Locale.getDefault());
+                Date dueDate = dateFormat.parse(dateStr + " " + timeStr);
+
+                // Create and save task
+                Task task = new Task(taskName, timeStr, false, dueDate);
+                if (spinnerTaskList.getSelectedItemPosition() > 0) {
+                    TaskList selectedList = taskLists.get(spinnerTaskList.getSelectedItemPosition() - 1);
+                    task.setTaskListId(selectedList.getId());
+                }
+
+                long taskId = dbHelper.createTask(task.getTitle(), task.getTime(), task.getTaskListId(),
+                        task.getDueDate());
+                task.setId(taskId);
+
+                // Schedule notification
+                scheduleTaskReminder(task);
+
+                // Refresh task list
+                setupTaskList();
+                setupRecyclerViews();
+
+                dialog.dismiss();
+            } catch (ParseException e) {
+                e.printStackTrace();
+                Toast.makeText(this, "Error creating task", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        dialog.show();
+    }
+
+    private void validateForm(EditText etTaskName, TextView tvSelectedDate,
+            TextView tvSelectedTime, Button btnSave) {
+        boolean isValid = !etTaskName.getText().toString().trim().isEmpty() &&
+                !tvSelectedDate.getText().toString().equals("Select Date") &&
+                !tvSelectedTime.getText().toString().equals("Select Time");
+        btnSave.setEnabled(isValid);
+    }
+
+    private void setupTaskListSpinner(Spinner spinner) {
+        List<String> taskListNames = new ArrayList<>();
+        taskListNames.add("No List");
+        for (TaskList taskList : taskLists) {
+            taskListNames.add(taskList.getName());
         }
-
-        // Get current time for the task
-        Calendar calendar = Calendar.getInstance();
-        SimpleDateFormat timeFormat = new SimpleDateFormat("h:mma", Locale.getDefault());
-        String currentTime = timeFormat.format(calendar.getTime());
-
-        // Create new task and add to the database
-        Date dueDate = hasSetDueDate ? selectedDateTime.getTime() : null;
-        long newTaskId = dbHelper.createTask(taskTitle, currentTime, taskListId, dueDate); // Assuming taskListId 0 for now
-        Task newTask = new Task(taskTitle, currentTime, false);
-        newTask.setId(newTaskId);
-        newTask.setTaskListId(taskListId);
-        if (hasSetDueDate) {
-            newTask.setDueDate(dueDate);
-
-            // Schedule a notification for the task due date
-            scheduleTaskReminder(newTask);
-        }
-
-        taskList.add(0, newTask); // Add to top of list
-        taskAdapter.notifyItemInserted(0);
-
-        // Scroll to top to show the new task
-        rvTasks.smoothScrollToPosition(0);
-
-        // Clear the input field and reset date/time
-        etNewTask.setText("");
-        tvDueDate.setText("Not set");
-        hasSetDueDate = false;
-
-        Toast.makeText(this, "Task added successfully", Toast.LENGTH_SHORT).show();
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_item, taskListNames);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
     }
 
     /**
@@ -383,5 +474,24 @@ public class MainActivity extends BaseActivity implements TaskAdapter.OnTaskClic
             String formattedDateTime = dateTimeFormat.format(task.getDueDate());
             Toast.makeText(this, "Reminder set for " + formattedDateTime, Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private void previousDay() {
+        selectedDate.add(Calendar.DAY_OF_MONTH, -1);
+        updateCurrentDateDisplay();
+        setupTaskList();
+        setupRecyclerViews();
+    }
+
+    private void nextDay() {
+        selectedDate.add(Calendar.DAY_OF_MONTH, 1);
+        updateCurrentDateDisplay();
+        setupTaskList();
+        setupRecyclerViews();
+    }
+
+    private void updateCurrentDateDisplay() {
+        tvCurrentDate
+                .setText(dayFormat.format(selectedDate.getTime()) + " " + dateFormat.format(selectedDate.getTime()));
     }
 }
